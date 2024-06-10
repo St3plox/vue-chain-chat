@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/home/st3pegor/Projects/blockchain-experiments/vue-chat/contracts/Message.sol": {
-      "lastModificationDate": 1717916170536,
-      "contentHash": "0686e36cd2acb9a03fdc2a639ddb52ba",
+      "lastModificationDate": 1717994370462,
+      "contentHash": "ac30ac82fe5060b17d6fd67bb960f717",
       "sourceName": "contracts/Message.sol",
       "solcConfig": {
         "version": "0.8.0",
