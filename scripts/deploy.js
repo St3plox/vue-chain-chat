@@ -1,28 +1,28 @@
-import hardhat from 'hardhat';
-const { ethers } = hardhat;
-
-import { promises as fs } from 'fs';
-import path from 'path';
+import hardhat from 'hardhat'
+const { ethers } = hardhat
+import { promises as fs } from 'fs'
+import path from 'path'
 
 async function main() {
-  // We get the contract to deploy
-  const Greeter = await ethers.getContractFactory("Message");
-  const greeter = await Greeter.deploy();
+  // Get the contract to deploy
+  const Greeter = await ethers.getContractFactory('Message')
+  const greeter = await Greeter.deploy()
 
-  await greeter.deployed();
+  await greeter.deployed()
 
-  const addressData = {
-    address: greeter.address
-  };
+  // Save the contract address and ABI to a file
+  const contractData = {
+    address: greeter.address,
+    abi: JSON.parse(greeter.interface.format('json'))
+  }
 
-  // Write the address to a JSON file
-  const filePath = path.resolve("contracts/cfg/message_contract.json");
-  await fs.writeFile(filePath, JSON.stringify(addressData, null, 2));
+  // Write the address and ABI to a JSON file
+  const filePath = path.resolve('contracts/cfg/message_contract.json')
+  await fs.writeFile(filePath, JSON.stringify(contractData, null, 2))
 
-  console.log("Greeter deployed to:", greeter.address);
+  console.log('Greeter deployed to:', greeter.address)
 }
 
 main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+  console.error(error)
+})
