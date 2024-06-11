@@ -1,100 +1,130 @@
 <template>
-  <div>
-    <div>
-      <h2>Messages</h2>
-      <ul>
-        <li v-for="(message, index) in messages" :key="index">
-          <p><strong>Sender:</strong> {{ message.sender }}</p>
-          <p><strong>Message:</strong> {{ message.text }}</p>
-        </li>
-      </ul>
-    </div>
-    <div>
-      <p>Message is: {{ newMessage }}</p>
-      <textarea v-model="newMessage" placeholder="Add multiple lines"></textarea>
-      <button @click="handleSubmit">Submit</button>
-      <p>Contract deployed to: {{ contractAddress }}</p>
+  <div id="app" class="centered">
+    <div class="chat-box">
+      <div class="messages">
+        <div v-for="message in messages" :key="message.timestamp" class="message">
+          <strong>{{ message.sender }}:</strong> {{ message.text }} <span class="timestamp">{{ formatTimestamp(message.timestamp) }}</span>
+        </div>
+      </div>
+      <div class="input-box">
+        <input type="text" v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type a message..." />
+        <button @click="sendMessage">Send</button>
+      </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ethers } from 'ethers'
-import { onMounted, ref } from 'vue'
+<script>
+import Web3 from 'web3';
+import messageContractConfig from './contracts/cfg/message_contract.json';
 
-// Define contract address and ABI
-const contractAddress = ref('')
-const contractABI = ref([])
+export default {
+  data() {
+    return {
+      web3: null,
+      contract: null,
+      messages: [],
+      newMessage: ''
+    };
+  },
+  methods: {
+    async loadMessages() {
+      const messages = await this.contract.methods.getAllMessages().call();
+      this.messages = messages.map(message => ({
+        sender: message.sender,
+        text: message.text,
+        timestamp: Number(message.timestamp)
+      }));
+    },
+    async sendMessage() {
+      if (this.newMessage.trim() === '') return;
 
-const newMessage = ref('')
-const messages = ref([])
+      try {
+        // Request authentication from MetaMask
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const sender = accounts[0]; // Use the first account
+        await this.contract.methods.post(this.newMessage).send({ from: sender });
 
-const requestAccess = async () => {
-  if (window.ethereum) {
-    try {
-      await window.ethereum.request({ method: 'eth_requestAccounts' })
-    } catch (error) {
-      console.error('User denied account access:', error)
+        this.newMessage = '';
+        this.loadMessages();
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
+    },
+    formatTimestamp(timestamp) {
+      return new Date(timestamp * 1000).toLocaleString();
     }
-  } else {
-    console.error('MetaMask is not installed')
+  },
+  async mounted() {
+    if (typeof window.ethereum !== 'undefined') {
+      this.web3 = new Web3(window.ethereum);
+      try {
+        // Request account access if needed
+        await window.ethereum.enable();
+        this.contract = new this.web3.eth.Contract(messageContractConfig.abi, messageContractConfig.address);
+        this.loadMessages();
+
+        // Listen for new messages
+        this.contract.events.NewMessage()
+          .on('data', (event) => {
+            this.loadMessages();
+          });
+      } catch (error) {
+        console.error('Error accessing MetaMask accounts:', error);
+      }
+    } else {
+      console.error('MetaMask not detected');
+    }
   }
-}
-
-const handleSubmit = async () => {
-  try {
-    if (!window.ethereum) throw new Error('MetaMask is not installed')
-
-    const provider = new ethers.providers.Web3Provider(window.ethereum)
-    const signer = provider.getSigner()
-    const contract = new ethers.Contract(contractAddress.value, contractABI.value, signer)
-
-    await contract.post(newMessage.value)
-    console.log('Message submitted:', newMessage.value)
-
-    newMessage.value = ''
-    await fetchMessages()
-  } catch (error) {
-    console.error('Error submitting message:', error)
-  }
-}
-
-const fetchMessages = async () => {
-  try {
-    if (!window.ethereum) throw new Error('MetaMask is not installed')
-
-    const response = await fetch('contracts/cfg/message_contract.json')
-    const fetchData = await response.json()
-
-    const provider = new ethers.providers.Web3Provider(window.ethereum)
-    const abi = fetchData.abi
-    const address = fetchData.address
-    const contract = new ethers.Contract(address, abi, provider)
-
-    console.log('Address trying to access', address)
-    const messagesArray = await contract.getAllMessages()
-
-    messages.value = messagesArray
-  } catch (error) {
-    console.error('Error fetching messages:', error)
-  }
-}
-
-onMounted(async () => {
-  await requestAccess()
-
-  try {
-    const response = await fetch('contracts/cfg/message_contract.json')
-    const data = await response.json()
-
-    contractAddress.value = data.address
-    contractABI.value = data.abi
-
-    console.log('Contract deployed to:', data.address)
-
-    await fetchMessages()
-  } catch (error) {
-    console.error('Error fetching contract details:', error)
-  }
-})
+};
 </script>
+
+<style>
+#app {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Make it take up the full height of the viewport */
+}
+.chat-box {
+  width: 500px;
+  margin: 0 auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.messages {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+.message {
+  margin-bottom: 5px;
+}
+.timestamp {
+  font-size: 0.8em;
+  color: #999;
+}
+.input-box {
+  display: flex;
+}
+.input-box input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+.input-box button {
+  padding: 10px;
+  margin-left: 5px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.input-box button:hover {
+  background-color: #0056b3;
+}
+</style>

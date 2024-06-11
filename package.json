@@ -11,7 +11,10 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "vue": "^3.4.21"
+    "@vueuse/head": "^2.0.0",
+    "vue": "^3.4.21",
+    "vue-router": "^4.0.13",
+    "web3": "^4.9.0"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.3",

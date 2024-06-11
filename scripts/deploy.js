@@ -17,7 +17,7 @@ async function main() {
   }
 
   // Write the address and ABI to a JSON file
-  const filePath = path.resolve('contracts/cfg/message_contract.json')
+  const filePath = path.resolve('src/components/contracts/cfg/message_contract.json')
   await fs.writeFile(filePath, JSON.stringify(contractData, null, 2))
 
   console.log('Greeter deployed to:', greeter.address)
