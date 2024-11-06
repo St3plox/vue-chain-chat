@@ -1,8 +1,14 @@
 # vue-chat
 
+Languages
+
+- [English](README.md)
+- [Русский](README.ru.md)
+
 This project is created for learning. It represents a simple web-based messenger built with Vue.js and Web3. It allows users to authenticate via MetaMask and send messages from their own addresses. The messages are stored on the Ethereum blockchain using a Solidity smart contract.
 
 P.S. This is my first experience in Vue and solidity, I didn't even now how to change the title
+
 
 
 ## Project Setup
